@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "1094701860618",
+    "firebase_url": "https://gycc-group12-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "gycc-group12",
+    "storage_bucket": "gycc-group12.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1094701860618:android:c74334b10e655c8197dcf3",
+        "android_client_info": {
+          "package_name": "com.group12.new_gycc"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDS13zEFYsuS-g0WY4FwI0JGcIYnOof_EY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
