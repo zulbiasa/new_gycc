@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:new_gycc/medicalPage.dart';
+import 'package:new_gycc/sosPage.dart';
 import 'profilePage.dart';
 
 class DashboardPage extends StatelessWidget {
@@ -155,6 +157,7 @@ class DashboardPage extends StatelessWidget {
                         label: "Health",
                         color: Colors.blue,
                         iconSize: 70,
+                        builders: MedicalPage()
                       ),
                       _buildDashboardButton(
                         context,
@@ -162,6 +165,7 @@ class DashboardPage extends StatelessWidget {
                         label: "SOS Alert",
                         color: Colors.blue,
                         iconSize: 70,
+                          builders: SosPage(),
                       ),
                       _buildDashboardButton(
                         context,
@@ -169,6 +173,7 @@ class DashboardPage extends StatelessWidget {
                         label: "Medicine Reminders",
                         color: Colors.blue,
                         iconSize: 70,
+                          builders: MedicalPage()
                       ),
                       _buildDashboardButton(
                         context,
@@ -176,6 +181,7 @@ class DashboardPage extends StatelessWidget {
                         label: "Activities Tracking",
                         color: Colors.blue,
                         iconSize: 70,
+                          builders: MedicalPage()
                       ),
                       _buildDashboardButton(
                         context,
@@ -183,6 +189,7 @@ class DashboardPage extends StatelessWidget {
                         label: "Mood",
                         color: Colors.blue,
                         iconSize: 70,
+                          builders: MedicalPage()
                       ),
                     ],
                   ),
@@ -196,7 +203,7 @@ class DashboardPage extends StatelessWidget {
   }
 
   Widget _buildDashboardButton(BuildContext context,
-      {required IconData icon, required String label, required Color color, required double iconSize}) {
+      {required IconData icon, required String label, required Color color, required double iconSize, required builders}) {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
         backgroundColor: color,
@@ -207,6 +214,7 @@ class DashboardPage extends StatelessWidget {
       ),
       onPressed: () {
         // Define navigation or action here
+        Navigator.push(context, MaterialPageRoute(builder: (context) => builders));
       },
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
