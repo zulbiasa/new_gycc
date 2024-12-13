@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'package:image_cropper/image_cropper.dart';
+import 'aboutPage.dart';
 
 class ProfilePage extends StatefulWidget {
   final String id; // User ID
@@ -13,6 +18,8 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   final DatabaseReference _databaseRef = FirebaseDatabase.instance.ref();
+  File? _profileImage;
+  bool _isLoading = false; // Loading indicator state
 
   // Variables to hold user data
   String userName = "Loading...";
@@ -51,6 +58,40 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
+  // Function to pick an image from the gallery
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    setState(() {
+      _isLoading = true; // Show loading indicator
+    });
+
+    try {
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      if (pickedFile != null) {
+        final croppedFile = await ImageCropper().cropImage(
+          sourcePath: pickedFile.path,
+          aspectRatio: CropAspectRatio(ratioX: 1, ratioY: 1), // Enforce 1:1 aspect ratio
+        );
+
+        if (croppedFile != null) {
+          setState(() {
+            _profileImage = File(croppedFile.path);
+          });
+
+          final storageRef = FirebaseStorage.instance.ref();
+          final profileImageRef = storageRef.child('${widget.id}.png');
+          await profileImageRef.putFile(_profileImage!);
+        }
+      }
+    } catch (e) {
+      print("Error: $e");
+    } finally {
+      setState(() {
+        _isLoading = false; // Hide loading indicator
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -78,37 +119,45 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Container(
-              padding: EdgeInsets.all(16.0),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Color(0xFF2ea4db),
-                    Color(0xFF0f3ba3),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            child: Column(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(16.0),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Color(0xFF2ea4db),
+                        Color(0xFF0f3ba3),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.vertical(
+                      bottom: Radius.circular(24.0),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      _buildHeader(),
+                      SizedBox(height: 16),
+                      _buildInfoCards(),
+                    ],
+                  ),
                 ),
-                borderRadius: BorderRadius.vertical(
-                  bottom: Radius.circular(24.0),
-                ),
-              ),
-              child: Column(
-                children: [
-                  _buildHeader(),
-                  SizedBox(height: 16),
-                  _buildInfoCards(),
-                ],
-              ),
+                SizedBox(height: 16),
+                _buildAboutUsSection(context),
+                _buildFontSizeSlider(),
+              ],
             ),
-            SizedBox(height: 16),
-            _buildAboutUsSection(context),
-            _buildFontSizeSlider(),
-          ],
-        ),
+          ),
+          if (_isLoading)
+            Center(
+              child: CircularProgressIndicator(),
+            ),
+        ],
       ),
     );
   }
@@ -117,11 +166,18 @@ class _ProfilePageState extends State<ProfilePage> {
     return Container(
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 40,
-            backgroundImage: widget.profileImageUrl.isNotEmpty
-                ? NetworkImage(widget.profileImageUrl)
-                : AssetImage('assets/profile.jpg') as ImageProvider,
+          GestureDetector(
+            onTap: () {
+              _viewCurrentPhoto(); // Show dialog to view the current photo
+            },
+            child: CircleAvatar(
+              radius: 40,
+              backgroundImage: _profileImage != null
+                  ? FileImage(_profileImage!)
+                  : widget.profileImageUrl.isNotEmpty
+                  ? NetworkImage(widget.profileImageUrl)
+                  : AssetImage('assets/profile.jpg') as ImageProvider,
+            ),
           ),
           SizedBox(width: 16),
           Expanded(
@@ -139,12 +195,54 @@ class _ProfilePageState extends State<ProfilePage> {
               ],
             ),
           ),
-          IconButton(
-            icon: Icon(Icons.edit, color: Colors.white),
-            onPressed: () {},
-          ),
         ],
       ),
+    );
+  }
+
+  void _viewCurrentPhoto() {
+    showDialog(
+      context: context,
+      barrierDismissible: true, // Allow closing dialog by tapping outside
+      builder: (BuildContext context) {
+        return Scaffold(
+          backgroundColor: Colors.black.withOpacity(0.7), // Dark background with reduced opacity
+          body: Center(
+            child: Stack(
+              children: [
+                Center(
+                  child: _profileImage != null
+                      ? Image.file(_profileImage!, fit: BoxFit.contain)
+                      : widget.profileImageUrl.isNotEmpty
+                      ? Image.network(widget.profileImageUrl, fit: BoxFit.contain)
+                      : Image.asset('assets/profile.jpg', fit: BoxFit.contain),
+                ),
+                Positioned(
+                  top: 40,
+                  right: 16,
+                  child: IconButton(
+                    icon: Icon(Icons.edit, color: Colors.white, size: 30),
+                    onPressed: () {
+                      Navigator.pop(context); // Close dialog
+                      _pickImage(); // Allow image editing
+                    },
+                  ),
+                ),
+                Positioned(
+                  top: 40,
+                  left: 16,
+                  child: IconButton(
+                    icon: Icon(Icons.close, color: Colors.white, size: 30),
+                    onPressed: () {
+                      Navigator.pop(context); // Close dialog
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -194,22 +292,26 @@ class _ProfilePageState extends State<ProfilePage> {
           children: [
             Icon(icon, color: iconColor ?? Colors.white),
             SizedBox(width: 8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(color: Colors.white, fontSize: _fontSize),
-                ),
-                Text(
-                  value,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: _fontSize + 2,
-                    fontWeight: FontWeight.bold,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(color: Colors.white, fontSize: _fontSize),
                   ),
-                ),
-              ],
+                  Text(
+                    value,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: _fontSize + 2,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 2, // Add this line
+                    overflow: TextOverflow.ellipsis, // Add this line
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -222,7 +324,7 @@ class _ProfilePageState extends State<ProfilePage> {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => AboutUsPage()),
+          MaterialPageRoute(builder: (context) => AboutPage()),
         );
       },
       child: Container(
@@ -264,17 +366,6 @@ class _ProfilePageState extends State<ProfilePage> {
           },
         ),
       ],
-    );
-  }
-}
-
-// About Us Page
-class AboutUsPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text("About Us")),
-      body: Center(child: Text("About Us content goes here!")),
     );
   }
 }

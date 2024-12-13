@@ -3,15 +3,21 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:new_gycc/medicalPage.dart';
 import 'package:new_gycc/sosPage.dart';
+import 'package:new_gycc/trackingPage.dart';
 import 'profilePage.dart';
 
-class DashboardPage extends StatelessWidget {
-  final DatabaseReference _databaseRef = FirebaseDatabase.instance.ref();
-  final FirebaseStorage _storage = FirebaseStorage.instance;
-
+class DashboardPage extends StatefulWidget {
   final String id;
 
   DashboardPage({required this.id});
+
+  @override
+  _DashboardPageState createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage> {
+  final DatabaseReference _databaseRef = FirebaseDatabase.instance.ref();
+  final FirebaseStorage _storage = FirebaseStorage.instance;
 
   Future<String> _getUserName(String userId) async {
     final userSnapshot = await _databaseRef.child('User').child(userId).child('name').once();
@@ -49,7 +55,7 @@ class DashboardPage extends StatelessWidget {
         ),
         actions: [
           FutureBuilder<String>(
-            future: _getProfileImageUrl(id),
+            future: _getProfileImageUrl(widget.id),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return CircleAvatar(
@@ -65,16 +71,17 @@ class DashboardPage extends StatelessWidget {
 
               final profileImageUrl = snapshot.data!;
               return GestureDetector(
-                onTap: () {
-                  Navigator.push(
+                onTap: () async {
+                  await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => ProfilePage(
-                        id: id,
+                        id: widget.id,
                         profileImageUrl: profileImageUrl,
                       ),
                     ),
                   );
+                  setState(() {}); // Refresh the Dashboard to fetch the latest data
                 },
                 child: CircleAvatar(
                   backgroundImage: NetworkImage(profileImageUrl),
@@ -86,7 +93,7 @@ class DashboardPage extends StatelessWidget {
         ],
       ),
       body: FutureBuilder<String>(
-        future: _getUserName(id),
+        future: _getUserName(widget.id),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
@@ -157,7 +164,7 @@ class DashboardPage extends StatelessWidget {
                         label: "Health",
                         color: Colors.blue,
                         iconSize: 70,
-                        builders: MedicalPage()
+                        builders: MedicalPage(),
                       ),
                       _buildDashboardButton(
                         context,
@@ -165,7 +172,7 @@ class DashboardPage extends StatelessWidget {
                         label: "SOS Alert",
                         color: Colors.blue,
                         iconSize: 70,
-                          builders: SosPage(),
+                        builders: SosPage(),
                       ),
                       _buildDashboardButton(
                         context,
@@ -173,7 +180,7 @@ class DashboardPage extends StatelessWidget {
                         label: "Medicine Reminders",
                         color: Colors.blue,
                         iconSize: 70,
-                          builders: MedicalPage()
+                        builders: MedicalPage(),
                       ),
                       _buildDashboardButton(
                         context,
@@ -181,7 +188,7 @@ class DashboardPage extends StatelessWidget {
                         label: "Activities Tracking",
                         color: Colors.blue,
                         iconSize: 70,
-                          builders: MedicalPage()
+                        builders: ActivityTracking(userId: widget.id),
                       ),
                       _buildDashboardButton(
                         context,
@@ -189,7 +196,7 @@ class DashboardPage extends StatelessWidget {
                         label: "Mood",
                         color: Colors.blue,
                         iconSize: 70,
-                          builders: MedicalPage()
+                        builders: MedicalPage(),
                       ),
                     ],
                   ),
@@ -213,7 +220,6 @@ class DashboardPage extends StatelessWidget {
         padding: const EdgeInsets.all(16),
       ),
       onPressed: () {
-        // Define navigation or action here
         Navigator.push(context, MaterialPageRoute(builder: (context) => builders));
       },
       child: Column(

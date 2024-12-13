@@ -49,6 +49,8 @@ dev_dependencies:
   flutter_launcher_icons:
   hive_generator:
   build_runner:
+  image_picker:
+  image_cropper:
 
 flutter_launcher_icons:
   android: "launcher_icon"

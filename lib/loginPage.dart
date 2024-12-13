@@ -29,21 +29,29 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      // Fetch users from Firebase
-      DataSnapshot snapshot = await _databaseRef.child("User").get();
+      // Fetch users from Firebase where username matches
+      Query query = _databaseRef.child("User").orderByChild("username").equalTo(username);
+      DataSnapshot snapshot = await query.get();
 
       if (snapshot.exists) {
         Map<dynamic, dynamic> users = snapshot.value as Map<dynamic, dynamic>;
+
         for (var userId in users.keys) {
+
           var user = users[userId];
-          if (user["username"] == username && user["password"] == password) {
+
+          // Check if the password matches (consider hashed passwords)
+          if (user["password"] == password) {
             // Login successful
             setState(() {
               _isLoading = false;
             });
 
-            // Navigate to the next page or dashboard
-            Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => DashboardPage(id: userId)));
+            // Navigate to the dashboard with userId
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (BuildContext context) => DashboardPage(id: userId)),
+            );
             return;
           }
         }
@@ -58,7 +66,7 @@ class _LoginPageState extends State<LoginPage> {
       setState(() {
         _isLoading = false;
       });
-      _showErrorDialog("An error occurred. Please try again." + error.toString());
+      _showErrorDialog("An error occurred. Please try again. " + error.toString());
     }
   }
 

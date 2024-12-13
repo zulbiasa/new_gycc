@@ -1,70 +1,78 @@
 import 'package:flutter/material.dart';
 
-class AboutPage extends StatefulWidget {
-  @override
-  _AboutPageState createState() => _AboutPageState();
-}
-
-class _AboutPageState extends State<AboutPage> {
-  double _fontSize = 16;
-
+class AboutPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        title: Text(
-          'About Us',
-          style: TextStyle(color: Colors.black),
-        ),
-        centerTitle: true,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.blue),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+        title: Text('About Us'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            Image.asset('assets/dev_banner.png'),
+            SizedBox(height: 16),
+            Text(
+              'Meet Our Team',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 16),
+            Expanded(
+              child: ListView(
+                children: [
+                  TeamMember(
+                    name: 'Zulhelmi',
+                    description: 'Full Stack Developer with a passion for building scalable and efficient applications.',
+                  ),
+                  TeamMember(
+                    name: 'Zulhusni',
+                    description: 'Mobile App Developer with expertise in Flutter and a keen eye for design.',
+                  ),
+                  TeamMember(
+                    name: 'Amira',
+                    description: 'Backend Developer with a strong background in server-side programming and database management.',
+                  ),
+                  TeamMember(
+                    name: 'Aqilah',
+                    description: 'Frontend Developer with a talent for creating visually stunning and user-friendly interfaces.',
+                  ),
+                  TeamMember(
+                    name: 'Aina',
+                    description: 'Quality Assurance Engineer with a keen eye for detail and a passion for ensuring seamless user experiences.',
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              "Welcome to GYCC+, your ultimate health and wellness app. We are dedicated to providing the best solutions for your personal health management.",
-              style: TextStyle(fontSize: _fontSize, color: Colors.black),
-              textAlign: TextAlign.center,
+    );
+  }
+}
+
+class TeamMember extends StatelessWidget {
+  final String name;
+  final String description;
+
+  TeamMember({required this.name, required this.description});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              name,
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-          ),
-          Spacer(),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  "Font Size:",
-                  style: TextStyle(fontSize: 16),
-                ),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Slider(
-                    value: _fontSize,
-                    min: 12,
-                    max: 24,
-                    divisions: 6,
-                    label: _fontSize.toStringAsFixed(0),
-                    onChanged: (value) {
-                      setState(() {
-                        _fontSize = value;
-                      });
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+            SizedBox(height: 8),
+            Text(description),
+          ],
+        ),
       ),
     );
   }
