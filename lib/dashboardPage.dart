@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -26,13 +27,16 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Future<String> _getProfileImageUrl(String userId) async {
     try {
-      final ref = _storage.ref().child('$userId.png');
+      final ref = _storage.ref().child('$userId');
       return await ref.getDownloadURL();
     } catch (e) {
-      print("Error fetching profile image URL: $e");
+      if (kDebugMode) {
+        print("Error fetching profile image URL: $e");
+      }
       return 'assets/user_profile.png'; // Fallback to a default image
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -58,15 +62,13 @@ class _DashboardPageState extends State<DashboardPage> {
             future: _getProfileImageUrl(widget.id),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return CircleAvatar(
-                  backgroundImage: AssetImage('assets/user_profile.png'),
-                );
+                // Show a loading indicator or placeholder while waiting
+                return Image.asset('assets/user_profile.png',width: 45);
               }
 
-              if (snapshot.hasError || !snapshot.hasData) {
-                return CircleAvatar(
-                  backgroundImage: AssetImage('assets/user_profile.png'),
-                );
+              if (snapshot.hasError) {
+                // Show default image if there's an error fetching the URL
+                return Image.asset('assets/user_profile.png',width: 45);
               }
 
               final profileImageUrl = snapshot.data!;
@@ -83,8 +85,14 @@ class _DashboardPageState extends State<DashboardPage> {
                   );
                   setState(() {}); // Refresh the Dashboard to fetch the latest data
                 },
-                child: CircleAvatar(
-                  backgroundImage: NetworkImage(profileImageUrl),
+                child: ClipOval(
+                  child: Container(
+                    width: 50,
+                    child: Image.network(
+                      profileImageUrl,
+                      errorBuilder: (context, error, stackTrace) => Image.asset('assets/user_profile.png', width: 45,),
+                    ),
+                  ),
                 ),
               );
             },
@@ -96,7 +104,23 @@ class _DashboardPageState extends State<DashboardPage> {
         future: _getUserName(widget.id),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return Stack(
+              children: [
+                Container(
+                  color: Colors.black.withOpacity(0.3), // Semi-transparent background
+                ),
+                Center(
+                  child: ClipOval(
+                    child: Container(
+                      width: 45, // Custom width
+                      height: 45, // Custom height
+                      color: Colors.white, // White circular background
+                      child: CircularProgressIndicator(), // Loading indicator
+                    ),
+                  ),
+                ),
+              ],
+            );
           }
 
           if (snapshot.hasError) {
@@ -120,7 +144,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     child: Row(
                       children: [
                         Image.asset(
-                          'assets/elderly_couple.png', // Updated path
+                          'assets/elderly_couple.png',
                           height: 140,
                         ),
                         const SizedBox(width: 16),
@@ -164,7 +188,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         label: "Health",
                         color: Colors.blue,
                         iconSize: 70,
-                        builders: MedicalPage(),
+                        builder: MedicalPage(),
                       ),
                       _buildDashboardButton(
                         context,
@@ -172,7 +196,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         label: "SOS Alert",
                         color: Colors.blue,
                         iconSize: 70,
-                        builders: SosPage(),
+                        builder: SosPage(),
                       ),
                       _buildDashboardButton(
                         context,
@@ -180,7 +204,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         label: "Medicine Reminders",
                         color: Colors.blue,
                         iconSize: 70,
-                        builders: MedicalPage(),
+                        builder: MedicalPage(),
                       ),
                       _buildDashboardButton(
                         context,
@@ -188,7 +212,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         label: "Activities Tracking",
                         color: Colors.blue,
                         iconSize: 70,
-                        builders: ActivityTracking(userId: widget.id),
+                        builder: ActivityTracking(userId: widget.id),
                       ),
                       _buildDashboardButton(
                         context,
@@ -196,7 +220,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         label: "Mood",
                         color: Colors.blue,
                         iconSize: 70,
-                        builders: MedicalPage(),
+                        builder: MedicalPage(),
                       ),
                     ],
                   ),
@@ -210,7 +234,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildDashboardButton(BuildContext context,
-      {required IconData icon, required String label, required Color color, required double iconSize, required builders}) {
+      {required IconData icon, required String label, required Color color, required double iconSize, required builder}) {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
         backgroundColor: color,
@@ -220,7 +244,7 @@ class _DashboardPageState extends State<DashboardPage> {
         padding: const EdgeInsets.all(16),
       ),
       onPressed: () {
-        Navigator.push(context, MaterialPageRoute(builder: (context) => builders));
+        Navigator.push(context, MaterialPageRoute(builder: (context) => builder));
       },
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

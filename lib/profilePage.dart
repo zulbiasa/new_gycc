@@ -39,6 +39,9 @@ class _ProfilePageState extends State<ProfilePage> {
 
   // Fetch user data from Firebase
   Future<void> _fetchUserData() async {
+    setState(() {
+      _isLoading = true; // Show loading indicator
+    });
     try {
       final userSnapshot = await _databaseRef.child('User').child(widget.id).once();
       final userData = userSnapshot.snapshot.value as Map<dynamic, dynamic>;
@@ -55,6 +58,10 @@ class _ProfilePageState extends State<ProfilePage> {
       });
     } catch (e) {
       print("Error fetching user data: $e");
+    } finally {
+      setState(() {
+        _isLoading = false; // Hide loading indicator
+      });
     }
   }
 
@@ -79,7 +86,7 @@ class _ProfilePageState extends State<ProfilePage> {
           });
 
           final storageRef = FirebaseStorage.instance.ref();
-          final profileImageRef = storageRef.child('${widget.id}.png');
+          final profileImageRef = storageRef.child('${widget.id}');
           await profileImageRef.putFile(_profileImage!);
         }
       }
@@ -154,8 +161,22 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
           if (_isLoading)
-            Center(
-              child: CircularProgressIndicator(),
+            Stack(
+              children: [
+                Container(
+                  color: Colors.black.withOpacity(0.3), // Semi-transparent background
+                ),
+                Center(
+                  child: ClipOval(
+                    child: Container(
+                      width: 50, // Custom width
+                      height: 50, // Custom height
+                      color: Colors.white, // White circular background
+                      child: CircularProgressIndicator(), // Loading indicator
+                    ),
+                  ),
+                ),
+              ]
             ),
         ],
       ),
